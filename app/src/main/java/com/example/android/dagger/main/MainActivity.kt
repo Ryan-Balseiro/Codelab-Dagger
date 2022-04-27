@@ -31,10 +31,6 @@ import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    // @Inject annotated fields will be provided by Dagger
-    @Inject
-    lateinit var userManager: UserManager
-
     @Inject
     lateinit var mainViewModel: MainViewModel
 
@@ -44,8 +40,19 @@ class MainActivity : AppCompatActivity() {
      * else carry on with MainActivity
      */
     override fun onCreate(savedInstanceState: Bundle?) {
-        (application as MyApplication).appComponent.inject(this)
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_settings)
+
+        // 2) Grab userManager from appComponent to check if the user is logged in or not
+        val userManager = (application as MyApplication).appComponent.userManager()
+        if (!userManager.isUserLoggedIn()) { ... }
+        else {
+            setContentView(R.layout.activity_main)
+            // 3) If the MainActivity needs to be displayed, we get the UserComponent
+            // from the application graph and gets this Activity injected
+            userManager.userComponent!!.inject(this)
+            setupViews()
+        }
     }
 
     /**
@@ -56,10 +63,12 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.notifications).text = mainViewModel.notificationsText
     }
 
-    private fun setupViews() {
+     fun setupViews() {
         findViewById<TextView>(R.id.hello).text = mainViewModel.welcomeText
         findViewById<Button>(R.id.settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 }
+
+
